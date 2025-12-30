@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}{{ file.original_filename }} - Python File Hosting{% endblock %}
+
+{% block extra_css %}
+<style>
+.output-box {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Courier New', monospace;
+    max-height: 400px;
+    overflow-y: auto;
+}
+.code-preview {
+    background: #f8f9fa;
+    border-left: 4px solid #007bff;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('list_files') }}">My Files</a></li>
+            <li class="breadcrumb-item active">{{ file.original_filename }}</li>
+        </ol>
+    </nav>
+    
+    <!-- File Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-file-code text-primary"></i> {{ file.original_filename }}</h2>
+                    <p class="text-muted mb-0">File ID: {{ file.file_id }}</p>
+                </div>
+                <div class="btn-group">
+                    <a href="{{ url_for('list_files') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Status Card -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="card-title">File Status</h5>
+                            {% if file.status == 'running' %}
+                                <div class="alert alert-success d-inline-block">
+                                    <i class="fas fa-play-circle"></i> <strong>Running</strong>
+                                    <br>
+                                    <small>Started: {{ file.start_time|format_time if file.start_time else 'N/A' }}</small>
+                                    {% if file.pid %}
+                                        <br><small>Process ID: {{ file.pid }}</small>
+                                    {% endif %}
+                                </div>
+                            {% elif file.status == 'stopped' %}
+                                <div class="alert alert-secondary d-inline-block">
+                                    <i class="fas fa-stop-circle"></i> <strong>Stopped</strong>
+                                    {% if file.end_time %}
+                                        <br><small>Ended: {{ file.end_time|format_time }}</small>
+                                    {% endif %}
+                                </div>
+                            {% elif file.status == 'error' %}
+                                <div class="alert alert-danger d-inline-block">
+                                    <i class="fas fa-exclamation-triangle"></i> <strong>Error</strong>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info d-inline-block">
+                                    <strong>{{ file.status|title }}</strong>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="btn-group">
+                                {% if file.status == 'running' %}
+                                    <a href="{{ url_for('stop_file', file_id=file.file_id) }}" 
+                                       class="btn btn-warning btn-lg">
+                                        <i class="fas fa-stop"></i> Stop
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('start_file', file_id=file.file_id) }}" 
+                                       class="btn btn-success btn-lg">
+                                        <i class="fas fa-play"></i> Start
+                                    </a>
+                                {% endif %}
+                                <a href="{{ url_for('download_file', file_id=file.file_id) }}" 
+                                   class="btn btn-primary btn-lg">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                                <a href="{{ url_for('delete_file', file_id=file.file_id) }}" 
+                                   class="btn btn-danger btn-lg"
+                                   onclick="return confirm('Are you sure? This will delete the file permanently.')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Left Column - File Info & Actions -->
+        <div class="col-md-4">
+            <!-- File Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> File Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Uploaded:</th>
+                            <td>{{ file.upload_time|format_time }}</td>
+                        </tr>
+                        <tr>
+                            <th>File Size:</th>
+                            <td>
+                                {% if file.filepath and file.filepath|file_exists %}
+                                    {{ file.filepath|file_size }} KB
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Storage Path:</th>
+                            <td><small class="text-muted">{{ file.filepath }}</small></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Module Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cubes"></i> Dependencies</h5>
+                </div>
+                <div class="card-body">
+                    {% if detected_imports %}
+                        <h6>Detected Imports:</h6>
+                        <div class="mb-3">
+                            {% for imp in detected_imports %}
+                                <span class="badge bg-info mb-1">{{ imp }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    {% if installed_modules %}
+                        <h6>Installed Modules:</h6>
+                        <div class="mb-3">
+                            {% for mod in installed_modules %}
+                                <span class="badge bg-success mb-1">{{ mod }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    {% if failed_modules %}
+                        <h6>Failed to Install:</h6>
+                        <div>
+                            {% for mod in failed_modules %}
+                                <span class="badge bg-danger mb-1">{{ mod }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    {% if not detected_imports and not installed_modules and not failed_modules %}
+                        <p class="text-muted">No external dependencies detected.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('view_output', file_id=file.file_id) }}" 
+                           target="_blank" class="btn btn-outline-primary">
+                            <i class="fas fa-terminal"></i> View Output
+                        </a>
+                        <a href="{{ url_for('start_file', file_id=file.file_id) }}" 
+                           class="btn btn-outline-success">
+                            <i class="fas fa-redo"></i> Restart File
+                        </a>
+                        <a href="{{ url_for('download_file', file_id=file.file_id) }}" 
+                           class="btn btn-outline-info">
+                            <i class="fas fa-file-download"></i> Download Again
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column - Content & Output -->
+        <div class="col-md-8">
+            <!-- Code Preview -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-code"></i> Code Preview</h5>
+                    <span class="badge bg-primary">{{ file_content|length }} characters</span>
+                </div>
+                <div class="card-body p-0">
+                    <pre class="code-preview p-3 m-0">{{ file_content }}</pre>
+                </div>
+            </div>
+            
+            <!-- Output -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-stream"></i> Execution Output</h5>
+                    <small class="text-muted">
+                        {% if file.status == 'running' %}
+                            <span class="text-success">
+                                <i class="fas fa-circle"></i> Live
+                            </span>
+                        {% endif %}
+                    </small>
+                </div>
+                <div class="card-body p-0">
+                    <div class="output-box p-3">
+                        {% if file.last_output %}
+                            <span class="text-success">>>> Output:</span><br>
+                            {{ file.last_output }}
+                        {% else %}
+                            <span class="text-muted">No output yet. Start the file to see output.</span>
+                        {% endif %}
+                        
+                        {% if file.last_error %}
+                            <br><br>
+                            <span class="text-danger">>>> Errors:</span><br>
+                            {{ file.last_error }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col">
+                            <small class="text-muted">
+                                Last updated: 
+                                {% if file.end_time %}
+                                    {{ file.end_time|format_time }}
+                                {% elif file.start_time %}
+                                    {{ file.start_time|format_time }}
+                                {% else %}
+                                    Never
+                                {% endif %}
+                            </small>
+                        </div>
+                        <div class="col text-end">
+                            {% if file.status == 'running' %}
+                                <a href="{{ url_for('view_output', file_id=file.file_id) }}" 
+                                   target="_blank" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-external-link-alt"></i> Open in New Tab
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if file.status == 'running' %}
+<script>
+// Auto-refresh output every 3 seconds if file is running
+setTimeout(function() {
+    window.location.reload();
+}, 3000);
+</script>
+{% endif %}
+{% endblock %}

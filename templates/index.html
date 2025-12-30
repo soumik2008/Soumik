@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Python File Hosting{% endblock %}
+
+{% block content %}
+<div class="hero-section py-5 bg-gradient text-white">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Host & Run Python Files Online</h1>
+                <p class="lead mb-4">Upload your Python scripts, automatically install dependencies, and run them in the cloud. No setup required!</p>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                    {% if current_user %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg px-4 me-md-2">
+                            <i class="fas fa-rocket"></i> Go to Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('register') }}" class="btn btn-light btn-lg px-4 me-md-2">
+                            <i class="fas fa-user-plus"></i> Get Started Free
+                        </a>
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-4">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card shadow-lg">
+                    <div class="card-body p-4">
+                        <h4 class="card-title mb-4">How it works:</h4>
+                        <div class="steps">
+                            <div class="step mb-4">
+                                <div class="step-icon bg-primary rounded-circle d-inline-flex align-items-center justify-content-center">
+                                    <i class="fas fa-upload text-white"></i>
+                                </div>
+                                <div class="step-content ms-4">
+                                    <h5>1. Upload Python File</h5>
+                                    <p class="text-muted">Upload any .py file (max 16MB)</p>
+                                </div>
+                            </div>
+                            <div class="step mb-4">
+                                <div class="step-icon bg-success rounded-circle d-inline-flex align-items-center justify-content-center">
+                                    <i class="fas fa-magic text-white"></i>
+                                </div>
+                                <div class="step-content ms-4">
+                                    <h5>2. Auto Install Dependencies</h5>
+                                    <p class="text-muted">We detect and install required modules automatically</p>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-icon bg-warning rounded-circle d-inline-flex align-items-center justify-content-center">
+                                    <i class="fas fa-play text-white"></i>
+                                </div>
+                                <div class="step-content ms-4">
+                                    <h5>3. Run & Manage</h5>
+                                    <p class="text-muted">Start, stop, and monitor your Python scripts</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row text-center mb-5">
+        <div class="col">
+            <h2 class="fw-bold">Features</h2>
+            <p class="text-muted">Everything you need to host and run Python files</p>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-bolt fa-3x text-primary"></i>
+                    </div>
+                    <h4 class="card-title">Auto Dependency Install</h4>
+                    <p class="card-text">Automatically detects and installs required Python modules from your imports.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-shield-alt fa-3x text-success"></i>
+                    </div>
+                    <h4 class="card-title">User Accounts</h4>
+                    <p class="card-text">Secure login system to keep your files private and organized.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-chart-line fa-3x text-warning"></i>
+                    </div>
+                    <h4 class="card-title">Real-time Monitoring</h4>
+                    <p class="card-text">View live output, errors, and control your running scripts.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h2 class="fw-bold mb-4">Ready to host your Python files?</h2>
+                <p class="lead mb-4">Join thousands of developers who use our platform to test and run their Python scripts.</p>
+                {% if not current_user %}
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-rocket"></i> Start Free Today
+                </a>
+                {% endif %}
+            </div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-3">Example Python File</h5>
+                        <pre class="bg-dark text-light p-3 rounded"><code># test_script.py
+import requests
+import pandas as pd
+from datetime import datetime
+
+print("Script started at:", datetime.now())
+
+# Your code here
+data = {"message": "Hello from Python Hosting!"}
+print("Data:", data)
+
+print("Script completed successfully!")</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

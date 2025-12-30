@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}My Files - Python File Hosting{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-file-code"></i> My Python Files</h2>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+            <p class="text-muted">Manage all your uploaded Python files</p>
+        </div>
+    </div>
+    
+    <!-- Files Table -->
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">All Files ({{ files|length }})</h5>
+                    <a href="#uploadModal" class="btn btn-primary btn-sm" data-bs-toggle="modal">
+                        <i class="fas fa-plus"></i> Upload New
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if files %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>File</th>
+                                        <th>Status</th>
+                                        <th>Size</th>
+                                        <th>Uploaded</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for file in files %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="file-icon me-3">
+                                                    <i class="fas fa-file-code fa-2x text-primary"></i>
+                                                </div>
+                                                <div>
+                                                    <strong>{{ file.original_filename }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        ID: {{ file.file_id }}
+                                                        {% if file.installed_modules %}
+                                                            <br>
+                                                            <i class="fas fa-check text-success"></i> 
+                                                            {{ file.installed_modules.split(',')|length }} modules installed
+                                                        {% endif %}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if file.status == 'running' %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-play"></i> Running
+                                                </span>
+                                                <br>
+                                                <small class="text-muted">PID: {{ file.pid }}</small>
+                                            {% elif file.status == 'stopped' %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-stop"></i> Stopped
+                                                </span>
+                                            {% elif file.status == 'error' %}
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-exclamation-triangle"></i> Error
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-info">{{ file.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if file.filepath and file.filepath|file_exists %}
+                                                {{ file.filepath|file_size }} KB
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ file.upload_time|format_time }}</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="{{ url_for('file_detail', file_id=file.file_id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if file.status == 'running' %}
+                                                    <a href="{{ url_for('stop_file', file_id=file.file_id) }}" 
+                                                       class="btn btn-sm btn-outline-warning" title="Stop">
+                                                        <i class="fas fa-stop"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{{ url_for('start_file', file_id=file.file_id) }}" 
+                                                       class="btn btn-sm btn-outline-success" title="Start">
+                                                        <i class="fas fa-play"></i>
+                                                    </a>
+                                                {% endif %}
+                                                <a href="{{ url_for('download_file', file_id=file.file_id) }}" 
+                                                   class="btn btn-sm btn-outline-info" title="Download">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                                <a href="{{ url_for('delete_file', file_id=file.file_id) }}" 
+                                                   class="btn btn-sm btn-outline-danger" 
+                                                   onclick="return confirm('Are you sure? This will delete the file permanently.')"
+                                                   title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-upload fa-4x text-muted mb-3"></i>
+                            <h4>No files yet</h4>
+                            <p class="text-muted mb-4">Upload your first Python file to get started</p>
+                            <a href="#uploadModal" class="btn btn-primary btn-lg" data-bs-toggle="modal">
+                                <i class="fas fa-upload"></i> Upload First File
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-upload"></i> Upload Python File</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data" id="uploadForm">
+                    <div class="mb-3">
+                        <label for="modalFile" class="form-label">Select Python File</label>
+                        <input class="form-control" type="file" id="modalFile" name="file" accept=".py" required>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> Only .py files, max 16MB
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="uploadForm" class="btn btn-primary">
+                    <i class="fas fa-cloud-upload-alt"></i> Upload
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// File size validation
+document.getElementById('modalFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const maxSize = 16 * 1024 * 1024; // 16MB
+    
+    if (file && file.size > maxSize) {
+        alert('File size exceeds 16MB limit. Please choose a smaller file.');
+        e.target.value = '';
+    }
+    
+    if (file && !file.name.toLowerCase().endsWith('.py')) {
+        alert('Only .py files are allowed.');
+        e.target.value = '';
+    }
+});
+</script>
+{% endblock %}

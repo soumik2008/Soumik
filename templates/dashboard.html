@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Python File Hosting{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card bg-gradient text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="card-title">Welcome, {{ user.username }}!</h2>
+                            <p class="card-text">Upload and manage your Python files in one place.</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a href="#upload-section" class="btn btn-light btn-lg">
+                                <i class="fas fa-upload"></i> Upload New File
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="stat-icon mb-3">
+                        <i class="fas fa-file-code fa-3x text-primary"></i>
+                    </div>
+                    <h3 class="card-title">{{ file_count }}</h3>
+                    <p class="card-text text-muted">Total Files</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="stat-icon mb-3">
+                        <i class="fas fa-play-circle fa-3x text-success"></i>
+                    </div>
+                    <h3 class="card-title">{{ running_count }}</h3>
+                    <p class="card-text text-muted">Running Files</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="stat-icon mb-3">
+                        <i class="fas fa-database fa-3x text-warning"></i>
+                    </div>
+                    <h3 class="card-title">{% if file_count > 0 %}Active{% else %}No{% endif %}</h3>
+                    <p class="card-text text-muted">Account Status</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upload Section -->
+    <div id="upload-section" class="row mb-5">
+        <div class="col">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-upload"></i> Upload Python File</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Choose Python File (.py)</label>
+                            <input class="form-control form-control-lg" type="file" 
+                                   id="file" name="file" accept=".py" required>
+                            <div class="form-text">Maximum file size: 16MB. Only .py files are allowed.</div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-cloud-upload-alt"></i> Upload & Host
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Files -->
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-history"></i> Recent Files</h4>
+                    <a href="{{ url_for('list_files') }}" class="btn btn-sm btn-outline-primary">
+                        View All <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if files %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Filename</th>
+                                        <th>Status</th>
+                                        <th>Uploaded</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for file in files %}
+                                    <tr>
+                                        <td>
+                                            <i class="fas fa-file-code text-primary"></i>
+                                            {{ file.original_filename }}
+                                            <br><small class="text-muted">ID: {{ file.file_id }}</small>
+                                        </td>
+                                        <td>
+                                            {% if file.status == 'running' %}
+                                                <span class="badge bg-success">Running</span>
+                                            {% elif file.status == 'stopped' %}
+                                                <span class="badge bg-secondary">Stopped</span>
+                                            {% elif file.status == 'error' %}
+                                                <span class="badge bg-danger">Error</span>
+                                            {% else %}
+                                                <span class="badge bg-info">{{ file.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ file.upload_time|format_time }}</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ url_for('file_detail', file_id=file.file_id) }}" 
+                                                   class="btn btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{{ url_for('download_file', file_id=file.file_id) }}" 
+                                                   class="btn btn-outline-success">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-file-upload fa-4x text-muted mb-3"></i>
+                            <h5>No files uploaded yet</h5>
+                            <p class="text-muted">Upload your first Python file to get started!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('list_files') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-list"></i> All Files
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('profile') }}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-user"></i> My Profile
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="#upload-section" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-plus"></i> New Upload
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger w-100">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
